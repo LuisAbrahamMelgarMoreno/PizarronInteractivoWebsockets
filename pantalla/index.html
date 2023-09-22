@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>PantallaLed</title>
+  <link rel="icon" href="favicon.ico" type="image/ico">
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+  <script src="js/socket.io.min.js"></script>
+</head>
+<body style="background-color: #132368;background-image: url('fondo.jpg'); background-attachment: fixed; background-position: center;height: 100vh;width:100%;background-repeat: no-repeat;background-size: 100vh 100%;"> 
+  <div id="app" >
+    <img v-if="imagen !== ''" :src="imagen" alt="pantallLed" style="height: 100vh;width:100%;">
+  </div>
+<script  src="js/vue.js"></script>
+
+<script>
+  const app = new Vue({
+        el: "#app",
+        data:{
+          socket: io('http://192.168.0.113:300'),
+          imagen:"fondo.jpg"
+        }, mounted(){
+            let vue = this;
+            this.socket.on("connect", () => {
+              let vueDemo = vue;
+              console.log("----------------------------------Conexion DESDE AL SERVIDOR--------------------------------");
+              this.socket.on('RecibirImagen',(demo)=>{
+                  vue.imagen = demo;
+                  console.log('RECIBI imagen');
+              });
+            });
+        }
+  });
+  
+</script>
+
+</body>
+</html>

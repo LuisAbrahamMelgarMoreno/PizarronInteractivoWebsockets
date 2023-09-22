@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>Pizarron ADMIN</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+  <script src="js/socket.io.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    
+    <!-- BOTONES HERRAMIENTAS -->
+    <div class="btn-group toolbar-container" role="group" aria-label="Basic example">
+      <button type="button" class="btn btn-primary">
+        <select id="tamanioSelect"  class="btn btn-primary" v-model="tamaño">
+          <option v-for="(a,index) in 30" :value="index+1" v-text="'Tamaño '+(index+1)"></option>
+        </select>
+      </button>
+      
+      <button type="button" class="btn btn-primary" v-on:click="borrando =!borrando">
+        <span v-if="borrando">
+          Goma
+          <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-eraser-fill" viewBox="0 0 16 16">
+            <path d="M8.086 2.207a2 2 0 0 1 2.828 0l3.879 3.879a2 2 0 0 1 0 2.828l-5.5 5.5A2 2 0 0 1 7.879 15H5.12a2 2 0 0 1-1.414-.586l-2.5-2.5a2 2 0 0 1 0-2.828l6.879-6.879zm.66 11.34L3.453 8.254 1.914 9.793a1 1 0 0 0 0 1.414l2.5 2.5a1 1 0 0 0 .707.293H7.88a1 1 0 0 0 .707-.293l.16-.16z"/>
+          </svg>
+        </span>
+        <span v-else>
+            Pincel
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+            </svg>
+        </span>
+      </button>
+      <button type="button" v-on:click="borrarLienzo()" class="btn btn-primary">Borrar todo</button>
+      <button type="button" class="btn btn-primary">
+        <input type="color" id="colorPicker" v-model="color" >
+      </button>
+      <button type="button" class="btn btn-primary" v-on:click="bloquearPizarron()">
+        <span v-if="bloquearP">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-lock-fill" viewBox="0 0 16 16">
+                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+            </svg>
+        </span>
+        <span v-else>
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-unlock-fill" viewBox="0 0 16 16">
+                <path d="M11 1a2 2 0 0 0-2 2v4a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h5V3a3 3 0 0 1 6 0v4a.5.5 0 0 1-1 0V3a2 2 0 0 0-2-2z"/>
+            </svg>
+        </span>
+      </button>
+      <button type="button" class="btn btn-primary" v-on:click="enviarPizarronPantalla()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-send-check-fill" viewBox="0 0 16 16">
+            <path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 1.59 2.498C8 14 8 13 8 12.5a4.5 4.5 0 0 1 5.026-4.47L15.964.686Zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471-.47 1.178Z"/>
+            <path d="M16 12.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Zm-1.993-1.679a.5.5 0 0 0-.686.172l-1.17 1.95-.547-.547a.5.5 0 0 0-.708.708l.774.773a.75.75 0 0 0 1.174-.144l1.335-2.226a.5.5 0 0 0-.172-.686Z"/>
+          </svg>
+      </button>
+      <button type="button" class="btn btn-primary" v-on:click="eliminarContenidoPantalla()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-window-x" viewBox="0 0 16 16">
+          <path d="M2.5 5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1ZM4 5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1Zm2-.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0Z"/>
+          <path d="M0 4a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v4a.5.5 0 0 1-1 0V7H1v5a1 1 0 0 0 1 1h5.5a.5.5 0 0 1 0 1H2a2 2 0 0 1-2-2V4Zm1 2h13V4a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v2Z"/>
+          <path d="M16 12.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Zm-4.854-1.354a.5.5 0 0 0 0 .708l.647.646-.647.646a.5.5 0 0 0 .708.708l.646-.647.646.647a.5.5 0 0 0 .708-.708l-.647-.646.647-.646a.5.5 0 0 0-.708-.708l-.646.647-.646-.647a.5.5 0 0 0-.708 0Z"/>
+        </svg>
+      </button>
+    </div>
+    
+    <canvas width="2000px" height="2000px" id="area_de_dibujo" 
+    @mousedown="apretarMouse" 
+    @mouseup="soltarMouse" 
+    @mousemove="dibujarMouse"
+    @touchstart="apretarTactil"
+    @touchend="soltarTactil"
+    @touchmove="dibujarTactil"
+    ></canvas>
+
+
+
+
+  </div>
+<!-- partial:index.partial.html -->
+
+
+
+<!-- <button onclick="clic()">lol</button>  -->
+<!-- partial -->
+<script  src="js/vue.js"></script>
+
+<script>
+  const app = new Vue({
+        el: "#app",
+        data:{
+          mouse:null,
+          color: '#000000',
+          tamaño:5,
+          cuadrito: null,
+          papel: null,
+          y: 150,
+          x: 150,
+          papel2:null,
+          teclas: {
+            MENOSTECLADO: 189,
+            MASTECLADO: 187,
+            MENOSNUMPAD: 109,
+            MASNUMPAD: 107,
+          },
+          trazo:[],
+          tamanioSelect:null,
+          colorPicker:null,
+          borrando:false,
+          bloquearP:false,
+          socket: io('http://192.168.100.111:300')
+        },
+        methods:{
+          //Borrar todo el lienzo (canvas), junto con los trazos creados con anteriodidad 
+          borrarLienzo(){
+            this.papel.clearRect(0, 0, this.cuadrito.width, this.cuadrito.height);
+            this.trazo = [];
+            this.socket.emit('BorrarDibujo',this.trazo);
+          },
+          bloquearPizarron(){
+            this.bloquearP = !this.bloquearP;
+            this.socket.emit('Desactivar',this.bloquearP);
+          },
+          enviarPizarronPantalla(){
+            //se envia la imagen a la pantalla
+            let imagen64 = this.cuadrito.toDataURL();
+            console.log(imagen64);
+            this.socket.emit('EnviarImagen',imagen64);
+          },
+          eliminarContenidoPantalla(){
+            this.socket.emit('EnviarImagen',"https://jgarcialopez.com.mx/content/themes/jgl/assets/images/template/logo.svg");
+          },
+          dibujarLinea(colorD, xinicial, yinicial, xfinal, yfinal,trazoBorrado)
+          {
+            console.log('dibujando huevoss');
+            //color = papel.strokeStyle;
+            if(trazoBorrado){ //ES PARA BORRAR LOS TRAZOS
+              this.papel.globalCompositeOperation = 'destination-out';
+            }else{
+              this.papel.globalCompositeOperation = 'source-over';
+            }
+            this.papel.beginPath();
+            this.papel.strokeStyle = colorD;
+            this.papel.lineWidth= this.tamaño;
+            this.papel.lineCap = "round";
+            this.papel.moveTo(xinicial, yinicial);
+            this.papel.lineTo(xfinal, yfinal);
+            this.papel.stroke();
+            this.papel.closePath;
+            //papel.strokeStyle = color;
+          },
+
+
+          //TODO -------------------------------FUNCIONES PARA MOUSE---------------------------------------------
+          apretarMouse(evento) //INICIA EL TRAZO
+          {
+            this.mouse = 1;
+            this.trazo = [];
+            this.dibujarLinea(this.color, this.x, this.y, this.x-0.1, this.y+0.1, this.papel);
+            this.x = evento.layerX;
+            this.y = evento.layerY;
+            console.log('apreto');
+          },
+          dibujarMouse(evento) // HACE EL TRAZADO
+          {
+            if (this.mouse == 1)
+              {
+                this.trazo.push(
+                  {color:this.color,
+                    x:this.x,
+                    y:this.y,
+                    layerX:evento.layerX,
+                    layerY:evento.layerY,
+                    papel:this.papel,
+                    borrando:this.borrando
+                  });
+                this.dibujarLinea(this.color, this.x, this.y, evento.layerX, evento.layerY, this.borrando);
+                console.log('lololol');
+
+              }
+              this.x = evento.layerX;
+              this.y = evento.layerY;
+          },
+          soltarMouse(evento) // TERMINA EL TRAZO
+          {
+            console.log('soltarMouse',evento);
+            this.mouse = 0;
+            this.x = evento.layerX;
+            this.y = evento.layerY;
+            //console.log('dejo de dibujar',this.papel);
+            //console.log(this.trazo);
+            //esto es una prueba de dibujar los trazos enviados
+            /*this.trazo.forEach(element=>{
+              this.dibujarLinea(element.color, element.x, element.y, element.layerX, element.layerY, element.papel);
+            });*/
+            console.log('se soltó')
+          },
+          //TODO -------------------------------FIN FUNCIONES PARA MOUSE---------------------------------------------
+
+
+          apretarTactil(evento) // INICIA EL TRAZO
+          {
+            console.log(evento.targetTouches[0].pageY,evento.targetTouches[0].pageX);
+            evento.preventDefault();
+            this.tactil = 1;
+            this.trazo = [];
+            /*  
+              x = evento.offsetX;
+              y = evento.offsetY;
+            */
+            this.x = evento.targetTouches[0].pageX;
+            this.y = evento.targetTouches[0].pageY;
+          },
+          dibujarTactil(evento) // HACE EL TRAZO
+          {
+              console.log(evento.targetTouches[0].pageX);
+              if (this.tactil > 0)
+              {
+          //      dibujarLinea(color, x-215, y-5, evento.targetTouches[0].pageX-215, evento.targetTouches[0].pageY-5, papel);
+                this.trazo.push(
+                  {color:this.color,
+                    x:this.x,
+                    y:this.y,
+                    layerX:evento.targetTouches[0].pageX,
+                    layerY:evento.targetTouches[0].pageY,
+                    papel:this.papel,
+                    tamaño:this.tamaño,
+                    borrando:this.borrando
+                  });
+                  console.log(this.trazo[this.trazo.length-1])
+                this.dibujarLinea(this.color, this.x, this.y, evento.targetTouches[0].pageX, evento.targetTouches[0].pageY, this.borrando);
+
+              }
+              this.x = evento.targetTouches[0].pageX;
+              this.y = evento.targetTouches[0].pageY;
+              /*
+              x = evento.offsetX;
+              y = evento.offsetY;*/
+          },
+          soltarTactil(evento) //TERMINA EL TRAZO
+          {
+              this.tactil= 0;
+              this.socket.emit('EnviarDibujo',this.trazo);
+              this.x = evento.offsetX;
+              this.y = evento.offsetY;
+          }
+        },
+        mounted(){
+          this.cuadrito = document.getElementById("area_de_dibujo");
+          this.papel = this.cuadrito.getContext("2d");
+          let colorAnterior;
+          let tamañoAnterior;
+          let vue = this;
+            this.socket.on("connect", () => {
+              let vueDemo = vue;
+              console.log("----------------------------------Conexion DESDE AL SERVIDOR--------------------------------");
+
+              vue.socket.on("TrazosServidor",(trazosServer,des)=>{
+                vueDemo.bloquearP = des;
+                colorAnterior = vueDemo.color;
+                tamañoAnterior = vueDemo.tamaño;
+                trazosServer.forEach(puntos=>{
+                  puntos.forEach(punto=>{
+                    vue.tamaño = punto.tamaño;
+                    vue.dibujarLinea(punto.color, punto.x, punto.y, punto.layerX, punto.layerY, punto.borrando);
+          
+                  });
+                  vueDemo.color = colorAnterior;
+                  vueDemo.tamaño = tamañoAnterior;
+                });
+              });
+
+              vue.socket.on('RecibirDibujo',(puntos)=>{
+                  //console.log(this.color,vue.color);
+
+                  colorAnterior = vueDemo.color;
+                  tamañoAnterior = vueDemo.tamaño;
+                  //console.log(color);
+                  console.log("Recibi la imagen",puntos);
+                  puntos.forEach(punto=>{
+                    vue.tamaño = punto.tamaño;
+                    vue.dibujarLinea(punto.color, punto.x, punto.y, punto.layerX, punto.layerY, punto.borrando);
+          
+                  });
+                  vueDemo.color = colorAnterior;
+                  vueDemo.tamaño = tamañoAnterior;
+                  //console.log(color);
+              });
+              
+          
+              /*
+              this.socket.on('RecibirDesactivar',(demo)=>{
+                  let disabled = demo;
+                  console.log('RECIBI BLOQUEO')
+              });
+              */
+          
+            });
+        }
+  });
+  
+</script>
+
+</body>
+</html>

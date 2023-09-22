@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <!--BLOQUEAR EL ZOOM-->
+  <meta charset="UTF-8" name="viewport" content="user-scalable=no">
+  <title>PizarronUsuario</title>
+  <link rel="icon" href="favicon.ico" type="image/ico">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/bootstrap.css">
+  <script src="js/bootstrap.js"></script>
+  <script src="js/socket.io.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    
+    <div class="contenedor-scroll todo">
+      <div class="scroll-vertical scroll-horizontal">
+        <div >
+          <canvas width="2000px" height="2000px" id="fondoCanvas" 
+          ></canvas>
+          <canvas width="2000px" height="2000px" id="area_de_dibujo" 
+          @mousedown="apretarMouse" 
+          @mouseup="soltarMouse" 
+          @mousemove="dibujarMouse"
+          @touchstart="apretarTactil"
+          @touchend="soltarTactil"
+          @touchmove="dibujarTactil"
+          ></canvas>          
+        </div>
+      </div>
+      <div class="menu" id="movableButton" >
+        <div class="toggle" >
+          <img src="https://jgarcialopez.com.mx/content/themes/jgl/assets/images/template/logo.svg" class="img-fluid" alt="">
+        </div>
+        
+        <li style="--i:0;">
+          <button type="button" class="btn active" :style="'background-color: '+(valorX >  0 ? '#132368' : '#E9250A')+'; color: white;'" v-on:click="scrollHorizontalLeft()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-caret-left-fill" viewBox="0 0 16 16">
+              <path d="m3.86 8.753 5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z"/>
+            </svg>
+          </button>
+        </li>
+        <li style="--i:1;">
+          <button type="button" class="btn active" style="background-color: #132368; color: white;">
+            <select id="tamanioSelect"  class="btn " style="background-color: #132368; color: white;" v-model="tamaño">
+              <option v-for="(a,index) in 6" :value="index+1" v-text="'T'+(index+1)"></option>
+            </select>
+          </button>
+        </li>
+        <li style="--i:2;">
+                  <!--  -->
+          <button type="button" class="btn active" :style="'background-color: '+(valorX > 0 ? '#132368' : '#E9250A')+'; color: white;'" v-on:click="scrollVerticalUp()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-caret-up-fill" viewBox="0 0 16 16">
+              <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z"/>
+            </svg>
+          </button>
+
+          
+        </li>
+        <li style="--i:3;">
+          <button type="button" class="btn active" style="background-color: #132368; color: white;" v-on:click="borrando =!borrando">
+            <span v-if="borrando">
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-brush-fill" viewBox="0 0 16 16">
+                <path d="M15.825.12a.5.5 0 0 1 .132.584c-1.53 3.43-4.743 8.17-7.095 10.64a6.067 6.067 0 0 1-2.373 1.534c-.018.227-.06.538-.16.868-.201.659-.667 1.479-1.708 1.74a8.118 8.118 0 0 1-3.078.132 3.659 3.659 0 0 1-.562-.135 1.382 1.382 0 0 1-.466-.247.714.714 0 0 1-.204-.288.622.622 0 0 1 .004-.443c.095-.245.316-.38.461-.452.394-.197.625-.453.867-.826.095-.144.184-.297.287-.472l.117-.198c.151-.255.326-.54.546-.848.528-.739 1.201-.925 1.746-.896.126.007.243.025.348.048.062-.172.142-.38.238-.608.261-.619.658-1.419 1.187-2.069 2.176-2.67 6.18-6.206 9.117-8.104a.5.5 0 0 1 .596.04z"/>
+              </svg>
+              
+            </span>
+            <span v-else>
+              <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-eraser-fill" viewBox="0 0 16 16">
+                <path d="M8.086 2.207a2 2 0 0 1 2.828 0l3.879 3.879a2 2 0 0 1 0 2.828l-5.5 5.5A2 2 0 0 1 7.879 15H5.12a2 2 0 0 1-1.414-.586l-2.5-2.5a2 2 0 0 1 0-2.828l6.879-6.879zm.66 11.34L3.453 8.254 1.914 9.793a1 1 0 0 0 0 1.414l2.5 2.5a1 1 0 0 0 .707.293H7.88a1 1 0 0 0 .707-.293l.16-.16z"/>
+              </svg>
+              
+            </span>
+          </button>
+          
+        </li>
+        <li style="--i:4;">
+          <button type="button" class="btn active" :style="'background-color: '+(valorX <  450 ? '#132368' : '#E9250A')+'; color: white;'" v-on:click="scrollHorizontalRight()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-caret-right-fill" viewBox="0 0 16 16">
+              <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
+            </svg>
+          </button>
+
+          
+        </li>
+        <li style="--i:5;">
+          <button type="button" class="btn active" data-bs-toggle="modal" data-bs-target="#textoModal" v-on:click="activarModoTexto()" :style="'background-color: #'+(modoTexto ? '0ecb14' : '132368')+'; color: white;'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-fonts" viewBox="0 0 16 16">
+              <path d="M12.258 3h-8.51l-.083 2.46h.479c.26-1.544.758-1.783 2.693-1.845l.424-.013v7.827c0 .663-.144.82-1.3.923v.52h4.082v-.52c-1.162-.103-1.306-.26-1.306-.923V3.602l.431.013c1.934.062 2.434.301 2.693 1.846h.479L12.258 3z"/>
+            </svg>
+          </button>
+
+        </li>
+        <li style="--i:6">
+          <button type="button" class="btn active" :style="'background-color: '+(valorY <  600 ? '#132368' : '#E9250A')+'; color: white;'" v-on:click="scrollVerticalDown()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-caret-down-fill" viewBox="0 0 16 16">
+              <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+            </svg>
+          </button>
+
+        </li>
+        <li style="--i:7">
+          <button type="button" class="btn active" style="background-color: #132368; color: white;">
+            <input type="color" id="colorPicker" v-model="color" >
+          </button>
+        </li>
+
+      </div>
+
+      <!-- Modal -->
+      <div class="modal fade" id="textoModal" tabindex="-1" aria-labelledby="textoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header" style="background-color: #132368; color: white;">
+              <h1 class="modal-title fs-5" id="textoModalLabel">Configuración del texto</h1>
+              <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row">
+                <div class="col-12">
+                  <label for="tamanioSelect">Tamaño de letra</label>
+                  <select id="tamanioSelect"  class="form-control" v-model="tamañoLetra">
+                    <option v-for="(a,index) in 10" :value="index+40" v-text="'Tamaño '+(index+1)"></option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label for="textotipo">Tipo de letra</label>
+                  <select id="textotipo" class="form-control" v-model="letraSeleccionada">
+                    <option v-for="(l,index) in letras" :value="l" v-text="'Letra '+ (index+1)" :style="'font-family:'+l"></option>
+                  </select>
+
+                </div>
+                
+              </div>
+              <div class="row my-2">
+                <div class="col-12">
+                  <h6>Ejemplo del texto:</h2>
+                  <h1 class="px-2" :style="'font-size: '+tamañoLetra+'px;margin: auto;'+'font-family:'+letraSeleccionada">Tamaño letra</h1>
+                </div>
+              </div>
+
+            </div>
+            <div class="modal-footer text-bg-secondary" >
+              <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+<!-- BOTONES HERRAMIENTAS
+      <div>
+        <div class="btn btn-fixed-top" style="position: fixed;top: 35px; background-color: #132368; width:75px; height:35px;left: 50%;" v-on:click="scrollVerticalUp()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" class="bi bi-caret-up-square" viewBox="0 0 16 16">
+              <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+              <path d="M3.544 10.705A.5.5 0 0 0 4 11h8a.5.5 0 0 0 .374-.832l-4-4.5a.5.5 0 0 0-.748 0l-4 4.5a.5.5 0 0 0-.082.537z"/>
+          </svg>
+        </div>
+        <div class="btn btn-fixed-left" style="position: fixed; top: 50%; left: 0px; width:35px; height:75px; transform: translate(0, -50%); background-color:#132368;" v-on:click="scrollHorizontalLeft()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" class="bi bi-caret-left-square" viewBox="0 0 16 16" style="margin-top:19px;margin-left:-5px">
+                <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+                <path d="M10.205 12.456A.5.5 0 0 0 10.5 12V4a.5.5 0 0 0-.832-.374l-4.5 4a.5.5 0 0 0 0 .748l4.5 4a.5.5 0 0 0 .537.082z"/>
+            </svg>
+        </div>
+        <div class="btn btn-fixed-right" style="position: fixed; top: 50%; right: 0px; width:35px; height:75px; transform: translate(0, -50%); background-color: #132368" v-on:click="scrollHorizontalRight()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" class="bi bi-caret-right-square" viewBox="0 0 16 16" style="margin-top:19px;margin-left:-5px">
+                <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+                <path d="M5.795 12.456A.5.5 0 0 1 5.5 12V4a.5.5 0 0 1 .832-.374l4.5 4a.5.5 0 0 1 0 .748l-4.5 4a.5.5 0 0 1-.537.082z"/>
+              </svg>
+        </div>
+        <div class="btn btn-fixed-bottom" style="position: fixed;bottom: 34px;  background-color: #132368; width:75px; height:35px;left: 50%;" v-on:click="scrollVerticalDown()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" class="bi bi-caret-down-square" viewBox="0 0 16 16">
+                <path d="M3.626 6.832A.5.5 0 0 1 4 6h8a.5.5 0 0 1 .374.832l-4 4.5a.5.5 0 0 1-.748 0l-4-4.5z"/>
+                <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm15 0a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2z"/>
+              </svg>
+        </div>
+      </div> 
+    </div>
+
+     -->
+    
+
+
+
+  </div>
+<script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+<script  src="js/vue.js"></script>
+
+<script>
+  const app = new Vue({
+        el: "#app",
+        data:{
+          mouse:null,
+          color: '#000000',
+          tamaño:5,
+          tamañoLetra: 40,
+          cuadrito: null,
+          papel: null,
+          y: 150,
+          x: 150,
+          papel2:null,
+          teclas: {
+            MENOSTECLADO: 189,
+            MASTECLADO: 187,
+            MENOSNUMPAD: 109,
+            MASNUMPAD: 107,
+          },
+          trazo:[],
+          tamanioSelect:null,
+          colorPicker:null,
+          borrando:false,
+          socket: io('http://192.168.0.113:300'),
+          desactivado:false,
+          valorX:0,
+          valorY:0,
+          textoAInsertar: "",
+          modoTexto:false,
+          letras:[
+            'RobotoSlab',
+            'Raleway',
+            'Preahvihear',
+            'Pacifico',
+            'Oswald',
+            'Lobster',
+            'Kanit',
+            'DancingScript',
+            'Caveat'
+          ],
+          palabrasProhibidas:[
+            'puto',
+            'puta',
+            'mierda',
+            'infierno',
+            'satanas',
+            'culo',
+            'culero',
+            'culera',
+            'coño',
+            'concha',
+            'chinga',
+            'cabron',
+            'cabrona',
+            'incrospito',
+            'ogete',
+            'ojete',
+            'pinche',
+            'mamon',
+            'mamona',
+            'wei',
+            'we',
+            'guei',
+            'guey',
+            'wey',
+            'putizimo',
+            'putisimo',
+            'putisima',
+            'putizima',
+            'perro',
+            'perra',
+            'perrito',
+            'perrita',
+            'caca',
+            'kaka',
+            'kk',
+            'popo',
+            'pipi',
+            'boludo',
+            'chingas',
+            'prostituta',
+            'piruja',
+            'pirujo',
+            'lesbiano',
+            'marica',
+            'marika',
+            'put0',
+            'ñero',
+            'kabron',
+            'kabrona',
+            'pendejo',
+            'joto',
+            'jota',
+            'mames',
+            'miserable',
+            'oportunista',
+            'chile',
+            'infiel',
+            'maldito',
+            'puñeta',
+            'puñetas',
+            'puñeto',
+            'animal',
+            'pelas',
+            'mugroso',
+            'mugrosa',
+            'sucio',
+            'ano',
+            'pija',
+            'shit',
+            'desgraciado',
+            'coger',
+            'cojer',
+            'cogio',
+            'cojio',
+            'chingada',
+            'verdura',
+            'verga',
+            'asno'
+          ],
+          letraSeleccionada:'RobotoSlab',
+          CapaDelFondo:null,
+          fondoDelCanvas:null,
+        },
+        methods:{
+         // FUNCIONES PARA EL TEXTO
+         activarModoTexto() {
+            this.modoTexto = !this.modoTexto;
+            this.dibujando = false; // Asegurarse de que no se esté dibujando al activar el modo de texto
+          },
+          
+        
+          // Manejar clic para escribir texto
+          escribirTexto(x,y) {
+            if (this.modoTexto && (!this.dibujando && !this.desactivado)) {
+              this.textoAInsertar = prompt("Escribe el texto");
+              if(this.textoAInsertar !== null){
+                //COMPROBACION DE PALABRAS ANTISONANTES
+
+                let arregloPalabras = this.textoAInsertar.split(" ");
+                let mostrar = true;
+                arregloPalabras.forEach(arreglo=>{
+                  if(mostrar){
+                    this.palabrasProhibidas.forEach(prohibido=>{
+                    if(prohibido.toLowerCase() == arreglo.toLowerCase()){
+                      mostrar = false;
+                      alert('La palabra: '+arreglo+', esta bloqueado en la aplicacion')
+                      return false;
+                    }
+                    });
+                  }
+                });
+
+
+                console.log('palabras',arregloPalabras);
+                if(mostrar){
+                  this.borrando = false;
+                  this.dibujarTexto(x, y);
+                }
+              }
+              //this.desactivado = false;
+            }
+          },
+          dibujarTexto(x, y) {
+            this.papel.globalCompositeOperation = 'source-over';
+            this.papel.fillStyle = this.color;
+            this.papel.font = this.tamaño+'px '+this.letraSeleccionada;
+            //EL LIMITE DE ESCRITURA ES DE 750 PIXALES
+            let atributosTexto = {
+              color:this.color,
+              tamaño:this.tamañoLetra,
+              texto: this.textoAInsertar,
+              x: x+(this.valorX*2),
+              y: y+(this.valorY*2),
+              letra: this.letraSeleccionada
+            }
+            this.socket.emit('EnviarTexto',atributosTexto);
+            this.papel.fillText(this.textoAInsertar, x+(this.valorX*2), y+(this.valorY*2));
+            this.papel.fillStyle = "rgb(113, 172, 58)";
+            this.modoTexto = false;
+          },
+          dibujarLinea(colorD, xinicial, yinicial, xfinal, yfinal,trazoBorrado)
+          {
+            //color = papel.strokeStyle;
+            this.papel.lineWidth= this.tamaño;
+
+            if(trazoBorrado && this.modoTexto == false){ //ES PARA BORRAR LOS TRAZOS
+              this.papel.globalCompositeOperation = 'destination-out';
+              this.papel.lineWidth= 20;
+
+            }else{
+              this.papel.globalCompositeOperation = 'source-over';
+            }
+            this.papel.beginPath();
+            this.papel.strokeStyle = colorD;
+            this.papel.lineCap = "round";
+            this.papel.moveTo(xinicial, yinicial);
+            this.papel.lineTo(xfinal, yfinal);
+            this.papel.stroke();
+            this.papel.closePath;
+            //papel.strokeStyle = color;
+          },
+
+
+          //TODO -------------------------------FUNCIONES PARA MOUSE---------------------------------------------
+          apretarMouse(evento) //INICIA EL TRAZO
+          {
+            this.mouse = 1;
+            this.trazo = [];
+            this.escribirTexto(evento.layerX,evento.layerY);
+            this.dibujarLinea(this.color, this.x, this.y, this.x-0.1, this.y+0.1, this.papel);
+            this.x = evento.layerX;
+            this.y = evento.layerY;
+          },
+          dibujarMouse(evento) // HACE EL TRAZADO
+          {
+            if (this.mouse == 1 && this.desactivado == false)
+              {
+                this.trazo.push(
+                  {color:this.color,
+                    x:this.x,
+                    y:this.y,
+                    layerX:evento.layerX,
+                    layerY:evento.layerY,
+                    papel:this.papel,
+                    borrando:this.borrando
+                  });
+                this.dibujarLinea(this.color, this.x, this.y, evento.layerX, evento.layerY, this.borrando);
+
+              }
+              this.x = evento.layerX;
+              this.y = evento.layerY;
+          },
+          soltarMouse(evento) // TERMINA EL TRAZO
+          {
+            this.mouse = 0;
+            this.x = evento.layerX;
+            this.y = evento.layerY;
+          },
+          //TODO -------------------------------FIN FUNCIONES PARA MOUSE---------------------------------------------
+
+
+          apretarTactil(evento) // INICIA EL TRAZO
+          {
+            evento.preventDefault();
+            
+            this.trazo = [];
+            /*  
+              x = evento.offsetX;
+              y = evento.offsetY;
+            */
+            if(this.modoTexto){
+              this.escribirTexto(evento.targetTouches[0].pageX,evento.targetTouches[0].pageY);
+              this.tactil = 0;
+            }else{
+              this.tactil = 1;
+            }
+            this.x = evento.targetTouches[0].pageX+this.valorX;
+            this.y = evento.targetTouches[0].pageY+this.valorY;
+          },
+          dibujarTactil(evento) // HACE EL TRAZO
+          {
+             
+              if (this.tactil > 0 && this.desactivado == false && !this.modoTexto)
+              {
+                this.trazo.push(
+                  {color:this.color,
+                    x:this.x+this.valorX,
+                    y:this.y+this.valorY,
+                    layerX:evento.targetTouches[0].pageX+(this.valorX*2),
+                    layerY:evento.targetTouches[0].pageY+(this.valorY*2),
+                    papel:this.papel,
+                    tamaño:this.tamaño,
+                    borrando:this.borrando
+                  });
+                this.dibujarLinea(this.color, this.x+this.valorX, this.y+this.valorY, evento.targetTouches[0].pageX+(this.valorX*2), evento.targetTouches[0].pageY+(this.valorY*2), this.borrando);
+
+              }
+              this.x = evento.targetTouches[0].pageX+this.valorX;
+              this.y = evento.targetTouches[0].pageY+this.valorY;
+              /*
+              x = evento.offsetX;
+              y = evento.offsetY;*/
+          },
+          soltarTactil(evento) //TERMINA EL TRAZO
+          {
+              this.tactil= 0;
+              this.socket.emit('EnviarDibujo',this.trazo);
+              this.x = evento.offsetX;
+              this.y = evento.offsetY;
+          },
+          //<!-- FUNCIONES PARA FLECHAS -->
+          scrollHorizontalLeft() {
+            const scrollableElement = document.querySelector(".scroll-horizontal");
+            scrollableElement.scrollLeft -= 300; // Ajusta el valor de desplazamiento horizontal hacia la izquierda según tu preferencia
+            if(this.valorX >0){
+              this.valorX = this.valorX-150;
+              //scrollableElement.scrollLeft -= 50; // Ajusta el valor de desplazamiento horizontal hacia la izquierda según tu preferencia
+
+            }
+
+          },
+          scrollHorizontalRight() {
+            const scrollableElement = document.querySelector(".scroll-horizontal");
+            if(this.valorX < 450){
+              scrollableElement.scrollLeft += 300; // Ajusta el valor de desplazamiento horizontal hacia la derecha según tu preferencia
+              this.valorX = this.valorX+150;
+            }
+          },
+          scrollVerticalUp() {
+            const scrollableElement = document.querySelector(".scroll-vertical");
+            scrollableElement.scrollTop -= 300; // Ajusta el valor de desplazamiento vertical hacia arriba según tu preferencia
+            if(this.valorY >0){
+              this.valorY = this.valorY-150;
+              //scrollableElement.scrollLeft -= 50; // Ajusta el valor de desplazamiento horizontal hacia la izquierda según tu preferencia
+
+            }
+          },
+          scrollVerticalDown() {
+            const scrollableElement = document.querySelector(".scroll-vertical");
+            if(this.valorY < 600){
+              scrollableElement.scrollTop += 300; // Ajusta el valor de desplazamiento vertical hacia abajo según tu preferencia
+              this.valorY = this.valorY+150;
+            }
+
+          },
+        },
+        mounted(){
+/*scripts para la burbuja*/
+        const button = document.getElementById('movableButton');
+        let isDragging = false;
+        let offsetX, offsetY;
+
+        button.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            // Obtener la posición inicial del cursor en relación con el botón
+            offsetX = e.clientX - button.getBoundingClientRect().left;
+            offsetY = e.clientY - button.getBoundingClientRect().top;
+        });
+
+        button.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                // Mover el botón a la posición del cursor
+                button.style.left = e.clientX - offsetX + 'px';
+                button.style.top = e.clientY - offsetY + 'px';
+            }
+        });
+
+        button.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+       // Eventos táctiles para dispositivos móviles
+        button.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            // Obtener la posición inicial del dedo en relación con el botón
+            offsetX = e.touches[0].clientX - button.getBoundingClientRect().left;
+            offsetY = e.touches[0].clientY - button.getBoundingClientRect().top;
+        });
+
+        button.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                // Mover el botón a la posición del dedo
+                button.style.left = e.touches[0].clientX - offsetX + 'px';
+                button.style.top = e.touches[0].clientY - offsetY + 'px';
+                // TOP MAXIMO DE MOVIMIENTO DE LA BURBUJA
+                
+                if(e.touches[0].clientX - offsetX > 10){ 
+                    //isDragging = false;
+                    button.style.left = "10px";
+                }
+                if(e.touches[0].clientX - offsetX < 0){
+                    //isDragging = false;
+                    button.style.left = "0px";
+                }
+
+                
+                if(e.touches[0].clientY - offsetY > 375){
+                    //isDragging = false;
+                    button.style.top = "375px";
+                }if(e.touches[0].clientY - offsetY < 150){
+                    //isDragging = false;
+                    button.style.top = "150px";
+                }
+
+                
+            }
+        });
+
+        button.addEventListener('touchend', () => {
+            if (isDragging) {
+                isDragging = false;
+                //button.style.left = "-150px"
+            }
+        });
+
+          
+          let toggle = document.querySelector('.toggle');
+          let menu = document.querySelector('.menu');
+
+          toggle.onclick = () => {
+            menu.classList.toggle('active');
+            menu.classList.toggle('regreso');
+
+          };
+          let vue = this;
+          this.fondoDelCanvas = document.getElementById("fondoCanvas");
+          this.CapaDelFondo = this.fondoDelCanvas.getContext('2d');
+          //this.CapaDelFondo.fillStyle = 'blue';
+          //this.CapaDelFondo.fillRect(0, 0, 2000, 2000);
+
+          var image = new Image();
+    
+          // Especificar la fuente de la imagen
+          image.src = "fondo.jpg";
+          image.onload=function(){
+            vue.CapaDelFondo.drawImage(image, 0,0,2000,2000);
+          };
+          // Dibujar la imagen en el canvas con las dimensiones y coordenadas calculadas
+          
+
+
+           // Bloquear el botón derecho del ratón
+           document.addEventListener('contextmenu', function (event) {
+            event.preventDefault();
+          });
+          // Bloquear el doble touch.
+          let lastTouchEnd = 0;
+          document.addEventListener('touchend', function (event) {
+              const now = new Date().getTime();
+              if (now - lastTouchEnd <= 400) { // 350 ms threshold double tap
+                  event.preventDefault();
+              }
+              lastTouchEnd = now;
+          }, false);
+
+          this.cuadrito = document.getElementById("area_de_dibujo");
+          this.papel = this.cuadrito.getContext("2d");
+          let colorAnterior;
+          let tamañoAnterior;
+            this.socket.on("connect", () => {
+              let vueDemo = vue;
+              console.log("----------------------------------Conexion DESDE AL SERVIDOR--------------------------------");
+
+              vue.socket.on("TrazosServidor",(trazosServer,des)=>{
+                vueDemo.desactivado = des;
+                colorAnterior = vueDemo.color;
+                tamañoAnterior = vueDemo.tamaño;
+                trazosServer.forEach(puntos=>{
+                  if(Array.isArray(puntos)){
+                    puntos.forEach(punto=>{
+                      vue.tamaño = punto.tamaño;
+                      vue.dibujarLinea(punto.color, punto.x, punto.y, punto.layerX, punto.layerY, punto.borrando);
+            
+                    });
+                    vueDemo.color = colorAnterior;
+                    vueDemo.tamaño = tamañoAnterior;
+
+                  }
+                  
+                });
+              });
+
+
+              vue.socket.on("TextosServidor",(textos,des)=>{
+                colorAnterior = vueDemo.color;
+                tamañoAnterior = vueDemo.tamaño;
+                vueDemo.papel.globalCompositeOperation = 'source-over';
+                textos.forEach(texto=>{
+                  vueDemo.papel.fillStyle = texto.color;
+                  vueDemo.papel.font = texto.tamaño+'px '+texto.letra;
+                  vueDemo.papel.fillText(texto.texto, texto.x, texto.y);
+                  vueDemo.papel.fillStyle = "rgb(113, 172, 58)";
+
+                  vueDemo.color = colorAnterior;
+                  vueDemo.tamaño = tamañoAnterior;
+                });
+              });
+
+              vue.socket.on('RecibirDibujo',(puntos)=>{
+                  //console.log(this.color,vue.color);
+
+                  colorAnterior = vueDemo.color;
+                  tamañoAnterior = vueDemo.tamaño;
+                  //console.log(color);
+                  puntos.forEach(punto=>{
+                    vue.tamaño = punto.tamaño;
+                    vue.dibujarLinea(punto.color, punto.x, punto.y, punto.layerX, punto.layerY, punto.borrando);
+          
+                  });
+                  vueDemo.color = colorAnterior;
+                  vueDemo.tamaño = tamañoAnterior;
+                  //console.log(color);
+              });
+              
+              
+            
+              this.socket.on('RecibirDesactivar',(demo)=>{
+                  vue.desactivado = demo;
+              });
+          
+
+              this.socket.on('BorradoDibujo',(demo)=>{
+                  vue.trazos = demo;
+                  vue.papel.clearRect(0, 0, vue.cuadrito.width, vue.cuadrito.height);
+              });
+
+
+              this.socket.on('RecibirTexto',(texto)=>{
+                colorAnterior = vueDemo.color;
+                tamañoAnterior = vueDemo.tamaño;
+                vueDemo.papel.globalCompositeOperation = 'source-over';
+                
+                vueDemo.papel.fillStyle = texto.color;
+                vueDemo.papel.font = texto.tamaño+'px '+texto.letra;
+                vueDemo.papel.fillText(texto.texto, texto.x, texto.y);
+                vueDemo.papel.fillStyle = "rgb(113, 172, 58)";
+
+
+                vueDemo.color = colorAnterior;
+                vueDemo.tamaño = tamañoAnterior;
+              });
+            });
+        }
+  });
+  
+</script>
+
+</body>
+</html>

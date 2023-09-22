@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css?family=Cute+Font');
+
+html, body
+    {
+      background-color:#DEE0F7;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    canvas
+    {
+      /*border-radius:2.5rem;
+      margin-left:100px;*/
+      background-color:rgb(113, 172, 58);
+      position: absolute;
+      cursor: crosshair;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+
+    /* input
+    {
+      border:none;
+      width:30px;
+      height:30px;
+      border-radius:5%;
+      position:absolute;
+      margin-left:10px;
+      cursor:pointer;
+    }
+
+input:hover{
+  opacity: .8;
+}
+
+input:focus{
+  outline:1.5px solid grey;
+}
+    .borrar{
+    background: linear-gradient(to right, #475FBD  34%, #C45A65 35%);
+      border:none;
+      border-radius:10px;
+      font-family:helvetica;
+      font-size:18px;
+      position:absolute;
+      margin-left:10px;
+      margin-top:300px;
+      width:70px;
+      height:40px
+    }
+
+     p
+      {
+        font-family: 'Cute Font', cursive;
+        position: absolute;
+        font-size:25px;
+        color:#FF9447;
+        margin-left:130px;
+        margin-top:505px;
+      } */
+
+
+
+      /*  */
+      .toolbar-container {
+        position: absolute;
+        top: 20px; /* Ajusta la posición vertical según tu preferencia */
+        left: 20px; /* Ajusta la posición horizontal según tu preferencia */
+        z-index: 999; /* Asegura que el contenedor esté por encima del lienzo */
+    }

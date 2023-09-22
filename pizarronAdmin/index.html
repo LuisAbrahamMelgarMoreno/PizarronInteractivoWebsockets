@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8" name="viewport" content="user-scalable=no">
+
+  <title>Pizarron Administrador</title>
+  <link rel="icon" href="favicon.ico" type="image/ico">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/bootstrap.css">
+  <script src="js/bootstrap.js"></script>
+  <script src="js/socket.io.min.js"></script>
+</head>
+<body style="overflow-y: hidden;">
+  <div id="app">
+    <div class="contenedor-scroll todo">
+      <div class="scroll-vertical scroll-horizontal">
+        <div >
+          <canvas width="2000px" height="2000px" id="fondoCanvas" 
+          ></canvas>
+          
+          <canvas width="2000px" height="2000px" id="area_de_dibujo" 
+          @mousedown="apretarMouse" 
+          @mouseup="soltarMouse" 
+          @mousemove="dibujarMouse"
+          @touchstart="apretarTactil"
+          @touchend="soltarTactil"
+          @touchmove="dibujarTactil"
+          ></canvas>         
+        </div>
+      </div>
+      <div class="menu" id="movableButton" >
+        <div class="toggle" >
+          <img src="https://jgarcialopez.com.mx/content/themes/jgl/assets/images/template/logo.svg" class="img-fluid" alt="">
+        </div>
+        
+        <li style="--i:0;">
+          <button type="button" class="btn active" :style="'background-color: '+(valorX >  0 ? '#132368' : '#E9250A')+'; color: white;'" v-on:click="scrollHorizontalLeft()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-caret-left-fill" viewBox="0 0 16 16">
+              <path d="m3.86 8.753 5.482 4.796c.646.566 1.658.106 1.658-.753V3.204a1 1 0 0 0-1.659-.753l-5.48 4.796a1 1 0 0 0 0 1.506z"/>
+            </svg>
+          </button>
+        </li>
+        <li style="--i:1;">
+          <button type="button" class="btn active" style="background-color: #132368; color: white;">
+            <select id="tamanioSelect"  class="btn " style="background-color: #132368; color: white;" v-model="tamaño">
+              <option v-for="(a,index) in 6" :value="index+1" v-text="'T'+(index+1)"></option>
+            </select>
+          </button>
+        </li>
+        <li style="--i:2;">
+          <button type="button" class="btn active" data-bs-toggle="modal" data-bs-target="#textoModal" style="background-color: #132368; color: white;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
+              <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
+            </svg>
+          </button>
+        </li>
+        <li style="--i:3;">
+          <button type="button" class="btn active" :style="'background-color: '+(valorY >  0 ? '#132368' : '#E9250A')+'; color: white;'" v-on:click="scrollVerticalUp()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-caret-up-fill" viewBox="0 0 16 16">
+              <path d="m7.247 4.86-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z"/>
+            </svg>
+          </button>
+        </li>
+        <li style="--i:4;">
+          <button type="button" class="btn active" style="background-color: #132368; color: white;" v-on:click="borrando =!borrando">
+            <span v-if="borrando">
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-brush-fill" viewBox="0 0 16 16">
+                <path d="M15.825.12a.5.5 0 0 1 .132.584c-1.53 3.43-4.743 8.17-7.095 10.64a6.067 6.067 0 0 1-2.373 1.534c-.018.227-.06.538-.16.868-.201.659-.667 1.479-1.708 1.74a8.118 8.118 0 0 1-3.078.132 3.659 3.659 0 0 1-.562-.135 1.382 1.382 0 0 1-.466-.247.714.714 0 0 1-.204-.288.622.622 0 0 1 .004-.443c.095-.245.316-.38.461-.452.394-.197.625-.453.867-.826.095-.144.184-.297.287-.472l.117-.198c.151-.255.326-.54.546-.848.528-.739 1.201-.925 1.746-.896.126.007.243.025.348.048.062-.172.142-.38.238-.608.261-.619.658-1.419 1.187-2.069 2.176-2.67 6.18-6.206 9.117-8.104a.5.5 0 0 1 .596.04z"/>
+              </svg>
+            </span>
+            <span v-else>
+              <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-eraser-fill" viewBox="0 0 16 16">
+                <path d="M8.086 2.207a2 2 0 0 1 2.828 0l3.879 3.879a2 2 0 0 1 0 2.828l-5.5 5.5A2 2 0 0 1 7.879 15H5.12a2 2 0 0 1-1.414-.586l-2.5-2.5a2 2 0 0 1 0-2.828l6.879-6.879zm.66 11.34L3.453 8.254 1.914 9.793a1 1 0 0 0 0 1.414l2.5 2.5a1 1 0 0 0 .707.293H7.88a1 1 0 0 0 .707-.293l.16-.16z"/>
+              </svg>
+              
+            </span>
+          </button>
+        </li>
+        <li style="--i:5;">
+          <button type="button" class="btn active" v-on:click="activarModoTexto()" :style="'background-color: #'+(modoTexto ? '0ecb14' : '132368')+'; color: white;'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-fonts" viewBox="0 0 16 16">
+              <path d="M12.258 3h-8.51l-.083 2.46h.479c.26-1.544.758-1.783 2.693-1.845l.424-.013v7.827c0 .663-.144.82-1.3.923v.52h4.082v-.52c-1.162-.103-1.306-.26-1.306-.923V3.602l.431.013c1.934.062 2.434.301 2.693 1.846h.479L12.258 3z"/>
+            </svg>
+            
+          </button>
+        </li>
+        <li style="--i:6">
+          <button type="button" class="btn active" :style="'background-color: '+(valorX <  450 ? '#132368' : '#E9250A')+'; color: white;'" v-on:click="scrollHorizontalRight()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-caret-right-fill" viewBox="0 0 16 16">
+              <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
+            </svg>
+          </button>
+        </li>
+        <li style="--i:7">
+          <button type="button" data-bs-toggle="modal" data-bs-target="#borrarModal" style="background-color: #132368; color: white;" class="btn active">
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-trash3-fill" viewBox="0 0 16 16">
+              <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5Zm-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5ZM4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06Zm6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528ZM8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5Z"/>
+            </svg>
+          </button>
+        </li>
+        <li style="--i:8">
+          <button type="button" class="btn active" style="background-color: #132368; color: white;">
+            <input type="color" id="colorPicker" v-model="color" >
+          </button>
+        </li>
+        <li style="--i:9">
+          <button type="button" class="btn active" :style="'background-color: '+(valorY <  600? '#132368' : '#E9250A')+'; color: white;'" v-on:click="scrollVerticalDown()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-caret-down-fill" viewBox="0 0 16 16">
+              <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+            </svg>
+          </button>
+        </li>
+        <li style="--i:10">
+
+          <button type="button" class="btn active" style="background-color: #132368; color: white;" v-on:click="bloquearPizarron()">
+            <span v-if="bloquearP">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-lock-fill" viewBox="0 0 16 16">
+                    <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+                </svg>
+            </span>
+            <span v-else>
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-unlock-fill" viewBox="0 0 16 16">
+                    <path d="M11 1a2 2 0 0 0-2 2v4a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h5V3a3 3 0 0 1 6 0v4a.5.5 0 0 1-1 0V3a2 2 0 0 0-2-2z"/>
+                </svg>
+            </span>
+          </button>
+        </li>
+        <li style="--i:11">
+          <button type="button" class="btn active" data-bs-toggle="modal" v-on:click="crearImagen()" data-bs-target="#imagenModal" style="background-color: #132368; color: white;" >
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-send-check-fill" viewBox="0 0 16 16">
+                <path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 1.59 2.498C8 14 8 13 8 12.5a4.5 4.5 0 0 1 5.026-4.47L15.964.686Zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471-.47 1.178Z"/>
+                <path d="M16 12.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Zm-1.993-1.679a.5.5 0 0 0-.686.172l-1.17 1.95-.547-.547a.5.5 0 0 0-.708.708l.774.773a.75.75 0 0 0 1.174-.144l1.335-2.226a.5.5 0 0 0-.172-.686Z"/>
+              </svg>
+          </button>
+        </li>
+
+      </div>
+
+
+      <div class="modal fade" id="textoModal" tabindex="-1" aria-labelledby="textoModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content ">
+            <div class="modal-header" style="background-color: #132368; color: white;">
+              <h1 class="modal-title fs-5" id="textoModalLabel">Configuración del texto</h1>
+              <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row">
+                <div class="col-12">
+                  <label for="tamanioSelect">Tamaño de letra</label>
+                  <select id="tamanioSelect"  class="form-control" v-model="tamañoLetra">
+                    <option v-for="(a,index) in 10" :value="index+40" v-text="'Tamaño '+(index+1)"></option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label for="textotipo">Tipo de letra</label>
+                  <select id="textotipo" class="form-control" v-model="letraSeleccionada">
+                    <option v-for="(l,index) in letras" :value="l" v-text="'Letra '+ (index+1)" :style="'font-family:'+l"></option>
+                  </select>
+
+                </div>
+                
+              </div>
+              <div class="row my-2">
+                <div class="col-12">
+                  <h6>Ejemplo del texto:</h2>
+                  <h1 class="px-2" :style="'font-size: '+tamañoLetra+'px;margin: auto;'+'font-family:'+letraSeleccionada">Tamaño letra</h1>
+                </div>
+              </div>
+
+            </div>
+            <div class="modal-footer text-bg-secondary">
+              <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="imagenModal" tabindex="-1" aria-labelledby="imagenModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content ">
+            <div class="modal-header" style="background-color: #132368; color: white;">
+              <h1 class="modal-title fs-5" id="imagenModalLabel">Envio de contenido</h1>
+              <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row my-2">
+                <div class="col-12">
+                    <img :src="imagen64" class="img-fluid" alt="">
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-6">
+                  <button class="btn btn-success" v-on:click="enviarPizarronPantalla()" data-bs-dismiss="modal">Enviar Contenido</button>
+                </div>
+                <div class="col-6">
+                  <button class="btn btn-danger" v-on:click="eliminarContenidoPantalla()" data-bs-dismiss="modal">Eliminar Contenido</button>
+                </div>
+              </div>
+
+            </div>
+            <div class="modal-footer text-bg-secondary">
+              <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal fade" id="borrarModal" tabindex="-1" aria-labelledby="borrarModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content ">
+            <div class="modal-header" style="background-color: #132368; color: white;">
+              <h1 class="modal-title fs-5" id="borrarModalLabel">Borrar todo el contenido</h1>
+              <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row my-2">
+                <div class="col-12">
+                    Estas seguro de eliminar todos los trazos?
+                </div>
+              </div>
+
+            </div>
+            <div class="modal-footer text-bg-secondary">
+              <button type="button" class="btn btn-primary" v-on:click="borrarLienzo()" data-bs-dismiss="modal">Aceptar</button>
+              <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- BOTONES HERRAMIENTAS -->
+
+
+
+
+
+
+
+  </div>
+<!-- partial:index.partial.html -->
+
+
+
+<!-- <button onclick="clic()">lol</button>  -->
+<!-- partial -->
+<script  src="js/vue.js"></script>
+
+<script>
+  const app = new Vue({
+        el: "#app",
+        data:{
+          mouse:null,
+          color: '#000000',
+          tamaño:5,
+          tamañoLetra: 40,
+          cuadrito: null,
+          papel: null,
+          y: 150,
+          x: 150,
+          papel2:null,
+          teclas: {
+            MENOSTECLADO: 189,
+            MASTECLADO: 187,
+            MENOSNUMPAD: 109,
+            MASNUMPAD: 107,
+          },
+          trazo:[],
+          tamanioSelect:null,
+          colorPicker:null,
+          borrando:false,
+          bloquearP:false,
+          socket: io('http://192.168.0.113:300'),
+          desactivado:false,
+          valorX:0,
+          valorY:0,
+          textoAInsertar: "",
+          modoTexto:false,
+          letras:[
+            'RobotoSlab',
+            'Raleway',
+            'Preahvihear',
+            'Pacifico',
+            'Oswald',
+            'Lobster',
+            'Kanit',
+            'DancingScript',
+            'Caveat'
+          ],
+          palabrasProhibidas:[
+            'puto',
+            'puta',
+            'mierda',
+            'infierno',
+            'satanas',
+            'culo',
+            'culero',
+            'culera',
+            'coño',
+            'concha',
+            'chinga',
+            'cabron',
+            'cabrona',
+            'incrospito',
+            'ogete',
+            'ojete',
+            'pinche',
+            'mamon',
+            'mamona',
+            'wei',
+            'we',
+            'guei',
+            'guey',
+            'wey',
+            'putizimo',
+            'putisimo',
+            'putisima',
+            'putizima',
+            'perro',
+            'perra',
+            'perrito',
+            'perrita',
+            'caca',
+            'kaka',
+            'kk',
+            'popo',
+            'pipi',
+            'boludo',
+            'chingas',
+            'prostituta',
+            'piruja',
+            'pirujo',
+            'lesbiano',
+            'marica',
+            'marika',
+            'put0',
+            'ñero',
+            'kabron',
+            'kabrona',
+            'pendejo',
+            'joto',
+            'jota',
+            'mames',
+            'miserable',
+            'oportunista',
+            'chile',
+            'infiel',
+            'maldito',
+            'puñeta',
+            'puñetas',
+            'puñeto',
+            'animal',
+            'pelas',
+            'mugroso',
+            'mugrosa',
+            'sucio',
+            'ano',
+            'pija',
+            'shit',
+            'desgraciado',
+            'coger',
+            'cojer',
+            'cogio',
+            'cojio',
+            'chingada',
+            'verdura',
+            'verga',
+            'asno'
+          ],
+          letraSeleccionada:'RobotoSlab',
+          CapaDelFondo:null,
+          fondoDelCanvas:null,
+          imagen64: ''
+        },
+        methods:{
+          activarModoTexto() {
+            this.modoTexto = !this.modoTexto;
+            this.dibujando = false; // Asegurarse de que no se esté dibujando al activar el modo de texto
+          },
+          
+        
+          // Manejar clic para escribir texto
+          escribirTexto(x,y) {
+            if (this.modoTexto && (!this.dibujando && !this.desactivado)) {
+              this.textoAInsertar = prompt("Escribe el texto");
+              if(this.textoAInsertar !== null){
+                //COMPROBACION DE PALABRAS ANTISONANTES
+
+                let arregloPalabras = this.textoAInsertar.split(" ");
+                let mostrar = true;
+                arregloPalabras.forEach(arreglo=>{
+                  if(mostrar){
+                    this.palabrasProhibidas.forEach(prohibido=>{
+                    if(prohibido.toLowerCase() == arreglo.toLowerCase()){
+                      mostrar = false;
+                      alert('La palabra: '+arreglo+', esta bloqueado en la aplicacion')
+                      return false;
+                    }
+                    });
+                  }
+                });
+
+
+                console.log('palabras',arregloPalabras);
+                if(mostrar){
+                  this.borrando = false;
+                  this.dibujarTexto(x, y);
+                }
+              }
+              this.modoTexto = false;
+              //this.desactivado = false;
+            }
+          },
+          dibujarTexto(x, y) {
+            this.papel.globalCompositeOperation = 'source-over';
+            this.papel.fillStyle = this.color;
+            this.papel.font = this.tamañoLetra+'px '+this.letraSeleccionada;
+            console.log(this.papel.measureText(this.textoAInsertar).width);
+            //EL LIMITE DE ESCRITURA ES DE 750 PIXALES
+            //EL LIMITE DE ESCRITURA ES DE 750 PIXALES
+            let atributosTexto = {
+              color:this.color,
+              tamaño:this.tamañoLetra,
+              texto: this.textoAInsertar,
+              x: x+(this.valorX*2),
+              y: y+(this.valorY*2),
+              letra: this.letraSeleccionada
+            }
+            this.socket.emit('EnviarTexto',atributosTexto);
+            this.papel.fillText(this.textoAInsertar, x+(this.valorX*2), y+(this.valorY*2));
+            this.papel.fillStyle = "rgb(113, 172, 58)";
+          },
+          crearImagen() {
+            let combinedCanvas = document.createElement('canvas');
+            combinedCanvas.width = this.cuadrito.width;
+            combinedCanvas.height = this.cuadrito.height;
+            let combinedContext = combinedCanvas.getContext('2d');
+            
+            // Dibuja el fondo y el círculo en el canvas combinado
+            combinedContext.drawImage(this.fondoDelCanvas, 0, 0);
+            combinedContext.drawImage(this.cuadrito, 0, 0);
+
+            // Descarga la imagen como un enlace
+            this.imagen64 = combinedCanvas.toDataURL();
+            //console.log(this.imagen64);
+        },
+        enviarPizarronPantalla() {
+          this.socket.binaryType = "arraybuffer";
+          this.socket.emit('EnviarImagen',this.imagen64);
+        },
+        //Borrar todo el lienzo (canvas), junto con los trazos creados con anteriodidad 
+          borrarLienzo(){
+            this.papel.clearRect(0, 0, this.cuadrito.width, this.cuadrito.height);
+            this.trazo = [];
+            this.socket.emit('BorrarDibujo',this.trazo);
+          },
+          bloquearPizarron(){
+            this.bloquearP = !this.bloquearP;
+            this.socket.emit('Desactivar',this.bloquearP);
+          },
+          eliminarContenidoPantalla(){
+            this.socket.emit('EnviarImagen',"");
+          },
+          dibujarLinea(colorD, xinicial, yinicial, xfinal, yfinal,trazoBorrado)
+          {
+            //console.log('dibujando huevoss');
+            //color = papel.strokeStyle;
+            this.papel.lineWidth= this.tamaño;
+
+            if(trazoBorrado && this.modoTexto == false){ //ES PARA BORRAR LOS TRAZOS
+              this.papel.globalCompositeOperation = 'destination-out';
+            this.papel.lineWidth= 20;
+
+            }else{
+              this.papel.globalCompositeOperation = 'source-over';
+            }
+            this.papel.beginPath();
+            this.papel.strokeStyle = colorD;
+            this.papel.lineCap = "round";
+            this.papel.moveTo(xinicial, yinicial);
+            this.papel.lineTo(xfinal, yfinal);
+            this.papel.stroke();
+            this.papel.closePath;
+            //papel.strokeStyle = color;
+            //papel.strokeStyle = color;
+          },
+
+
+          //TODO -------------------------------FUNCIONES PARA MOUSE---------------------------------------------
+          apretarMouse(evento) //INICIA EL TRAZO
+          {
+            this.mouse = 1;
+            this.trazo = [];
+            this.escribirTexto(evento.layerX,evento.layerY);
+            this.dibujarLinea(this.color, this.x, this.y, this.x-0.1, this.y+0.1, this.papel);
+            this.x = evento.layerX;
+            this.y = evento.layerY;
+            console.log('apreto');
+          },
+          dibujarMouse(evento) // HACE EL TRAZADO
+          {
+            if (this.mouse == 1)
+              {
+                this.trazo.push(
+                  {color:this.color,
+                    x:this.x,
+                    y:this.y,
+                    layerX:evento.layerX,
+                    layerY:evento.layerY,
+                    papel:this.papel,
+                    borrando:this.borrando
+                  });
+                this.dibujarLinea(this.color, this.x, this.y, evento.layerX, evento.layerY, this.borrando);
+                console.log('lololol');
+
+              }
+              this.x = evento.layerX;
+              this.y = evento.layerY;
+          },
+          soltarMouse(evento) // TERMINA EL TRAZO
+          {
+            console.log('soltarMouse',evento);
+            this.mouse = 0;
+            this.x = evento.layerX;
+            this.y = evento.layerY;
+            //console.log('dejo de dibujar',this.papel);
+            //console.log(this.trazo);
+            //esto es una prueba de dibujar los trazos enviados
+            /*this.trazo.forEach(element=>{
+              this.dibujarLinea(element.color, element.x, element.y, element.layerX, element.layerY, element.papel);
+            });*/
+            console.log('se soltó')
+          },
+          //TODO -------------------------------FIN FUNCIONES PARA MOUSE---------------------------------------------
+
+
+          apretarTactil(evento) // INICIA EL TRAZO
+          {
+            console.log(evento.targetTouches[0].pageY,evento.targetTouches[0].pageX);
+            evento.preventDefault();
+            
+            this.trazo = [];
+            if(this.modoTexto){
+              this.escribirTexto(evento.targetTouches[0].pageX,evento.targetTouches[0].pageY);
+              this.tactil = 0;
+            }else{
+              this.tactil = 1;
+            }
+            this.x = evento.targetTouches[0].pageX+this.valorX;
+            this.y = evento.targetTouches[0].pageY+this.valorY;
+          },
+          dibujarTactil(evento) // HACE EL TRAZO
+          {
+ //console.log(evento.targetTouches[0].pageX,this.x,'lol');
+              //console.log(evento.targetTouches[0].pageX+40,this.x+20);
+              if (this.tactil > 0 && this.desactivado == false && !this.modoTexto)
+              {
+          //      dibujarLinea(color, x-215, y-5, evento.targetTouches[0].pageX-215, evento.targetTouches[0].pageY-5, papel);
+                this.trazo.push(
+                  {color:this.color,
+                    x:this.x+this.valorX,
+                    y:this.y+this.valorY,
+                    layerX:evento.targetTouches[0].pageX+(this.valorX*2),
+                    layerY:evento.targetTouches[0].pageY+(this.valorY*2),
+                    papel:this.papel,
+                    tamaño:this.tamaño,
+                    borrando:this.borrando
+                  });
+                  console.log(this.trazo[this.trazo.length-1])
+                this.dibujarLinea(this.color, this.x+this.valorX, this.y+this.valorY, evento.targetTouches[0].pageX+(this.valorX*2), evento.targetTouches[0].pageY+(this.valorY*2), this.borrando);
+
+              }
+              this.x = evento.targetTouches[0].pageX+this.valorX;
+              this.y = evento.targetTouches[0].pageY+this.valorY;
+              /*
+              x = evento.offsetX;
+              y = evento.offsetY;*/
+          },
+          soltarTactil(evento) //TERMINA EL TRAZO
+          {
+              this.tactil= 0;
+              this.socket.emit('EnviarDibujo',this.trazo);
+              this.x = evento.offsetX;
+              this.y = evento.offsetY;
+          },
+          //<!-- FUNCIONES PARA FLECHAS -->
+          scrollHorizontalLeft() {
+            const scrollableElement = document.querySelector(".scroll-horizontal");
+            scrollableElement.scrollLeft -= 300; // Ajusta el valor de desplazamiento horizontal hacia la izquierda según tu preferencia
+            if(this.valorX >0){
+              this.valorX = this.valorX-150;
+              //scrollableElement.scrollLeft -= 50; // Ajusta el valor de desplazamiento horizontal hacia la izquierda según tu preferencia
+
+            }
+
+          },
+          scrollHorizontalRight() {
+            const scrollableElement = document.querySelector(".scroll-horizontal");
+            if(this.valorX < 450){
+              scrollableElement.scrollLeft += 300; // Ajusta el valor de desplazamiento horizontal hacia la derecha según tu preferencia
+              this.valorX = this.valorX+150;
+            }
+          },
+          scrollVerticalUp() {
+            const scrollableElement = document.querySelector(".scroll-vertical");
+            scrollableElement.scrollTop -= 300; // Ajusta el valor de desplazamiento vertical hacia arriba según tu preferencia
+            if(this.valorY >0){
+              this.valorY = this.valorY-150;
+              //scrollableElement.scrollLeft -= 50; // Ajusta el valor de desplazamiento horizontal hacia la izquierda según tu preferencia
+
+            }
+          },
+          scrollVerticalDown() {
+            const scrollableElement = document.querySelector(".scroll-vertical");
+            if(this.valorY < 600){
+              scrollableElement.scrollTop += 300; // Ajusta el valor de desplazamiento vertical hacia abajo según tu preferencia
+              this.valorY = this.valorY+150;
+            }
+
+          }
+        },
+        mounted(){
+          //-----------------------------------------------------------------------------------------------------------------------------------------------
+            /*scripts para la burbuja*/
+          const button = document.getElementById('movableButton');
+          let isDragging = false;
+          let offsetX, offsetY;
+
+          button.addEventListener('mousedown', (e) => {
+              isDragging = true;
+              // Obtener la posición inicial del cursor en relación con el botón
+              offsetX = e.clientX - button.getBoundingClientRect().left;
+              offsetY = e.clientY - button.getBoundingClientRect().top;
+          });
+
+          button.addEventListener('mousemove', (e) => {
+              if (isDragging) {
+                  // Mover el botón a la posición del cursor
+                  button.style.left = e.clientX - offsetX + 'px';
+                  button.style.top = e.clientY - offsetY + 'px';
+              }
+          });
+
+          button.addEventListener('mouseup', () => {
+              isDragging = false;
+          });
+
+          // Eventos táctiles para dispositivos móviles
+          button.addEventListener('touchstart', (e) => {
+              isDragging = true;
+              // Obtener la posición inicial del dedo en relación con el botón
+              offsetX = e.touches[0].clientX - button.getBoundingClientRect().left;
+              offsetY = e.touches[0].clientY - button.getBoundingClientRect().top;
+          });
+
+          button.addEventListener('touchmove', (e) => {
+              if (isDragging) {
+                  // Mover el botón a la posición del dedo
+                  button.style.left = e.touches[0].clientX - offsetX + 'px';
+                  button.style.top = e.touches[0].clientY - offsetY + 'px';
+                  // TOP MAXIMO DE MOVIMIENTO DE LA BURBUJA
+                  
+                  if(e.touches[0].clientX - offsetX > 10){ 
+                      //isDragging = false;
+                      button.style.left = "10px";
+                  }
+                  if(e.touches[0].clientX - offsetX < 0){
+                      //isDragging = false;
+                      button.style.left = "0px";
+                  }
+
+                  
+                  if(e.touches[0].clientY - offsetY > 375){
+                      //isDragging = false;
+                      button.style.top = "375px";
+                  }if(e.touches[0].clientY - offsetY < 150){
+                      //isDragging = false;
+                      button.style.top = "150px";
+                  }
+
+                  
+              }
+          });
+
+            button.addEventListener('touchend', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    //button.style.left = "-150px"
+                }
+            });
+
+          
+          let toggle = document.querySelector('.toggle');
+          let menu = document.querySelector('.menu');
+
+          toggle.onclick = () => {
+            menu.classList.toggle('active');
+            menu.classList.toggle('regreso');
+
+          };
+          //-----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+          let vue = this;
+          this.fondoDelCanvas = document.getElementById("fondoCanvas");
+          this.CapaDelFondo = this.fondoDelCanvas.getContext('2d');
+          //this.CapaDelFondo.fillStyle = 'blue';
+          //this.CapaDelFondo.fillRect(0, 0, 2000, 2000);
+
+          var image = new Image();
+    
+          // Especificar la fuente de la imagen
+          image.src = "fondo.jpg";
+          image.onload=function(){
+            vue.CapaDelFondo.drawImage(image, 0,0,2000,2000);
+          };
+          // Dibujar la imagen en el canvas con las dimensiones y coordenadas calculadas
+          
+          //console.log('ese wey confia en el gobierno',image);  
+                     // Bloquear el botón derecho del ratón
+                     document.addEventListener('contextmenu', function (event) {
+            event.preventDefault();
+          });
+          // Bloquear el doble touch.
+          let lastTouchEnd = 0;
+          document.addEventListener('touchend', function (event) {
+              const now = new Date().getTime();
+              if (now - lastTouchEnd <= 400) { // 350 ms threshold double tap
+                  event.preventDefault();
+              }
+              lastTouchEnd = now;
+          }, false);
+
+          //Cuadro
+          this.cuadrito = document.getElementById("area_de_dibujo");
+          this.papel = this.cuadrito.getContext("2d");
+          let colorAnterior;
+          let tamañoAnterior;
+          
+            this.socket.on("connect", () => {
+              let vueDemo = vue;
+              console.log("----------------------------------Conexion DESDE AL SERVIDOR--------------------------------");
+
+              vue.socket.on("TrazosServidor",(trazosServer,des)=>{
+                vueDemo.bloquearP = des;
+                colorAnterior = vueDemo.color;
+                tamañoAnterior = vueDemo.tamaño;
+                console.log(trazosServer);
+                trazosServer.forEach(puntos=>{
+                  if(Array.isArray(puntos)){
+                    puntos.forEach(punto=>{
+                      vue.tamaño = punto.tamaño;
+                      vue.dibujarLinea(punto.color, punto.x, punto.y, punto.layerX, punto.layerY, punto.borrando);
+          
+                    });
+                    vueDemo.color = colorAnterior;
+                    vueDemo.tamaño = tamañoAnterior;
+                  }
+                  
+                });
+              });
+
+              vue.socket.on("TextosServidor",(textos,des)=>{
+                colorAnterior = vueDemo.color;
+                tamañoAnterior = vueDemo.tamaño;
+                vueDemo.papel.globalCompositeOperation = 'source-over';
+                textos.forEach(texto=>{
+                  vueDemo.papel.fillStyle = texto.color;
+                  vueDemo.papel.font = texto.tamaño+'px '+texto.letra;
+                  vueDemo.papel.fillText(texto.texto, texto.x, texto.y);
+                  vueDemo.papel.fillStyle = "rgb(113, 172, 58)";
+
+                  vueDemo.color = colorAnterior;
+                  vueDemo.tamaño = tamañoAnterior;
+                });
+              });
+
+              vue.socket.on('RecibirDibujo',(puntos)=>{
+                  //console.log(this.color,vue.color);
+
+                  colorAnterior = vueDemo.color;
+                  tamañoAnterior = vueDemo.tamaño;
+                  //console.log(color);
+                  console.log("Recibi la imagen",puntos);
+                  puntos.forEach(punto=>{
+                    vue.tamaño = punto.tamaño;
+                    vue.dibujarLinea(punto.color, punto.x, punto.y, punto.layerX, punto.layerY, punto.borrando);
+          
+                  });
+                  vueDemo.color = colorAnterior;
+                  vueDemo.tamaño = tamañoAnterior;
+                  //console.log(color);
+              });
+              
+              this.socket.on('RecibirTexto',(texto)=>{
+                colorAnterior = vueDemo.color;
+                tamañoAnterior = vueDemo.tamaño;
+                vueDemo.papel.globalCompositeOperation = 'source-over';
+                
+                vueDemo.papel.fillStyle = texto.color;
+                vueDemo.papel.font = texto.tamaño+'px '+texto.letra;
+                vueDemo.papel.fillText(texto.texto, texto.x, texto.y);
+                vueDemo.papel.fillStyle = "rgb(113, 172, 58)";
+
+
+                vueDemo.color = colorAnterior;
+                vueDemo.tamaño = tamañoAnterior;
+              });
+          
+              this.socket.on('BorradoDibujo',(demo)=>{
+                  vue.trazos = demo;
+                  vue.papel.clearRect(0, 0, vue.cuadrito.width, vue.cuadrito.height);
+                  console.log('RECIBI BORRADO')
+              });
+              /*
+              this.socket.on('RecibirDesactivar',(demo)=>{
+                  let disabled = demo;
+                  console.log('RECIBI BLOQUEO')
+              });
+              */
+              this.socket.on('error', (error) => {
+                console.error('Error en el socket:', error);
+              });
+            });
+        }
+  });
+  
+</script>
+
+</body>
+</html>
